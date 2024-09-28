@@ -10,7 +10,6 @@ import os
 import subprocess
 import sys
 
-
 class DynamicWorkspaces:
     # Self initialization
     def __init__(self, DEBUG=False, NOTIFY=True):
@@ -127,19 +126,30 @@ class DynamicWorkspaces:
                 print(window.get_name())
         return windows
 
+    # Change the name of all workspaces to their number (starting at 0)
+    def rename_workspaces(self):
+        xfconf_cmd = "xfconf-query -c xfwm4 -p /general/workspace_names"
+        os.system(f"{xfconf_cmd} -r")
+        workspaces = subprocess.check_output(f"{xfconf_cmd} | tail -n +3", shell=True).decode("utf-8").splitlines()
+        while len(workspaces) == 0:
+            workspaces = subprocess.check_output(f"{xfconf_cmd} | tail -n +3", shell=True).decode("utf-8").splitlines()
+        print(workspaces)
+        for i in range(len(workspaces) - 1):
+            xfconf_cmd += f" -s \"{str(i)}\""
+        xfconf_cmd += " -s \"+\""
+        print(xfconf_cmd)
+        os.system(xfconf_cmd)
+
     # Functions for handling adding/removal of workspaces. These functions just work as
     # an interface to send shell commands with wmctrl.
     def add_workspace(self, workspaces_len):
         os.system(f"wmctrl -n {workspaces_len + 1}")
-        # Change the name of all workspaces to their number (starting at 0)
-        xfconf_cmd = f"xfconf-query -c xfwm4 -p /general/workspace_names"
-        for i in range(workspaces_len + 1):
-            xfconf_cmd += f" -s \"{str(i)}\""
-        os.system(xfconf_cmd)
+        self.rename_workspaces()
 
     def pop_workspace(self, workspaces_len):
         if len(self.screen.get_workspaces()) > 2:
             os.system(f"wmctrl -n {workspaces_len - 1}")
+            self.rename_workspaces()
 
     # Removes a workspace by index using wmctrl
     def remove_workspace_by_index(self, index):
