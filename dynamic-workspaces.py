@@ -40,8 +40,7 @@ class DynamicWorkspaces:
     def update_notification(self, in_screen, in_previously_active_workspace):
         # Gets the current amount of workspaces
         try:
-            workspace_num = str(
-                self.screen.get_active_workspace().get_number() + 1)
+            workspace_num = str(self.screen.get_active_workspace().get_number())
         except:
             workspace_num = None
         if workspace_num:
@@ -132,6 +131,11 @@ class DynamicWorkspaces:
     # an interface to send shell commands with wmctrl.
     def add_workspace(self, workspaces_len):
         os.system(f"wmctrl -n {workspaces_len + 1}")
+        # Change the name of all workspaces to their number (starting at 0)
+        xfconf_cmd = f"xfconf-query -c xfwm4 -p /general/workspace_names"
+        for i in range(workspaces_len + 1):
+            xfconf_cmd += f" -s \"{str(i)}\""
+        os.system(xfconf_cmd)
 
     def pop_workspace(self, workspaces_len):
         if len(self.screen.get_workspaces()) > 2:
